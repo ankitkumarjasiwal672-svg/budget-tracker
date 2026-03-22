@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Floww — Budget Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --gd:#1a3a2a; --gm:#2d5a3d; --gl:#4a8c5c; --gp:#d4edda;
+  --cr:#f5f0e8; --crd:#e0d8cc; --gold:#c9a84c;
+  --red:#c0392b; --redb:#fdecea;
+  --w:#ffffff; --tx:#1a2e1e; --tm:#5c7a62;
+  --sh:0 4px 24px rgba(26,58,42,0.10);
+  --sh2:0 8px 32px rgba(26,58,42,0.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--cr);color:var(--tx);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+header{
+  background:var(--gd);padding:18px 40px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200;
+  box-shadow:0 2px 20px rgba(0,0,0,0.22);
+}
+.logo{font-family:'Playfair Display',serif;font-size:1.65rem;color:var(--cr)}
+.logo em{color:var(--gold);font-style:italic}
+.tagline{font-size:0.68rem;color:#8ab89a;letter-spacing:2.5px;text-transform:uppercase;margin-top:2px}
+.hdate{text-align:right;font-size:0.76rem;color:#8ab89a}
+#ldate{display:block;font-size:0.92rem;color:var(--cr);font-weight:500;margin-bottom:2px}
+
+/* MAIN */
+main{max-width:980px;margin:30px auto;padding:0 20px 80px}
+
+/* CARDS */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.card{
+  background:var(--w);border-radius:20px;padding:22px 20px 18px;
+  border:1.5px solid var(--crd);position:relative;overflow:hidden;
+  transition:transform 0.28s cubic-bezier(.34,1.56,.64,1),box-shadow 0.25s;
+  cursor:default;
+}
+.card:hover{transform:translateY(-5px) scale(1.01);box-shadow:var(--sh2)}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0}
+.card.cinc::after{background:linear-gradient(90deg,#6ab87c,#2d5a3d)}
+.card.cexp::after{background:linear-gradient(90deg,#e67e22,#c0392b)}
+.card.cbal::after{background:linear-gradient(90deg,#f0c040,#c9a84c)}
+.clabel{font-size:0.67rem;text-transform:uppercase;letter-spacing:2px;color:var(--tm);margin-bottom:8px}
+.camt{font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:700;transition:all 0.35s}
+.card.cinc .camt{color:var(--gm)}
+.card.cexp .camt{color:var(--red)}
+.card.cbal .camt{color:var(--gold)}
+.card.cbal .camt.neg{color:var(--red)}
+.cbadge{
+  position:absolute;bottom:13px;right:15px;
+  font-size:0.65rem;font-weight:600;padding:2px 8px;border-radius:99px;
+}
+.card.cinc .cbadge{background:var(--gp);color:var(--gm)}
+.card.cexp .cbadge{background:var(--redb);color:var(--red)}
+.card.cbal .cbadge{background:#fef9e7;color:#9a7215}
+
+/* PROGRESS */
+.prog-wrap{
+  background:var(--w);border-radius:16px;padding:16px 22px 18px;
+  border:1.5px solid var(--crd);margin-bottom:24px;
+}
+.prog-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.prog-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--tm)}
+.ppct{
+  font-size:0.75rem;font-weight:600;padding:3px 10px;border-radius:99px;
+  background:var(--gp);color:var(--gm);transition:all 0.4s;
+}
+.ppct.warn{background:#fff3cd;color:#856404}
+.ppct.danger{background:var(--redb);color:var(--red)}
+.track{background:var(--crd);border-radius:99px;height:9px;overflow:hidden}
+.fill{
+  height:100%;border-radius:99px;width:0%;
+  background:linear-gradient(90deg,var(--gl),var(--gm));
+  transition:width 0.6s cubic-bezier(.4,0,.2,1);
+}
+.fill.warn{background:linear-gradient(90deg,#f0ad4e,#e67e22)}
+.fill.danger{background:linear-gradient(90deg,#e67e22,var(--red))}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1.35fr;gap:20px;align-items:start}
+
+/* PANEL */
+.panel{
+  background:var(--w);border-radius:20px;padding:24px 20px;
+  border:1.5px solid var(--crd);box-shadow:var(--sh);
+}
+.ptitle{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--gd);margin-bottom:16px}
+
+/* TOGGLE */
+.toggle{
+  display:flex;background:var(--cr);border-radius:12px;padding:4px;gap:4px;
+  margin-bottom:16px;border:1.5px solid var(--crd);
+}
+.tbtn{
+  flex:1;padding:9px 6px;border:none;border-radius:9px;
+  font-family:'DM Sans',sans-serif;font-size:0.84rem;font-weight:500;
+  cursor:pointer;background:transparent;color:var(--tm);
+  transition:all 0.22s cubic-bezier(.34,1.56,.64,1);
+  user-select:none;
+}
+.tbtn:hover:not(.ai):not(.ae){background:var(--crd)}
+.tbtn.ai{background:var(--gm);color:var(--w);box-shadow:0 3px 12px rgba(45,90,61,0.32)}
+.tbtn.ae{background:var(--red);color:var(--w);box-shadow:0 3px 12px rgba(192,57,43,0.32)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+.fg label{
+  display:block;font-size:0.68rem;text-transform:uppercase;
+  letter-spacing:1.8px;color:var(--tm);margin-bottom:5px;font-weight:500;
+}
+.fg input,.fg select{
+  width:100%;padding:10px 12px;border:1.5px solid var(--crd);border-radius:10px;
+  font-family:'DM Sans',sans-serif;font-size:0.88rem;color:var(--tx);
+  background:var(--cr);outline:none;
+  transition:border-color 0.2s,background 0.2s,box-shadow 0.2s;
+  -webkit-appearance:none;appearance:none;
+}
+.fg input:focus,.fg select:focus{
+  border-color:var(--gl);background:var(--w);
+  box-shadow:0 0 0 3px rgba(74,140,92,0.13);
+}
+.fg input.err{border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(192,57,43,0.13)!important;animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.sw{position:relative}
+.sw::after{
+  content:'▾';position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  color:var(--tm);pointer-events:none;font-size:0.82rem;
+}
+
+.addbtn{
+  width:100%;padding:12px;margin-top:4px;
+  background:linear-gradient(135deg,var(--gm),var(--gd));
+  color:var(--cr);border:none;border-radius:12px;
+  font-family:'DM Sans',sans-serif;font-size:0.92rem;font-weight:600;
+  cursor:pointer;letter-spacing:0.3px;
+  transition:transform 0.2s cubic-bezier(.34,1.56,.64,1),box-shadow 0.2s;
+  position:relative;overflow:hidden;
+}
+.addbtn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(26,58,42,0.28)}
+.addbtn:active{transform:scale(0.97)!important}
+.addbtn .ripple-el{
+  position:absolute;border-radius:50%;background:rgba(255,255,255,0.3);
+  transform:scale(0);animation:ripple .5s linear;pointer-events:none;
+}
+@keyframes ripple{to{transform:scale(4);opacity:0}}
+
+/* CHART */
+.chart-wrap{
+  background:var(--w);border-radius:20px;padding:20px 20px 16px;
+  border:1.5px solid var(--crd);margin-top:18px;box-shadow:var(--sh);
+  display:none;
+}
+.chart-wrap.visible{display:block}
+.chart-title{font-family:'Playfair Display',serif;font-size:0.98rem;color:var(--gd);margin-bottom:14px}
+.cbars{display:flex;gap:8px;align-items:flex-end;height:80px}
+.cbar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px}
+.cbar-wrap:hover .cbar{filter:brightness(1.12)}
+.cbar{width:100%;border-radius:5px 5px 0 0;min-height:4px;transition:height .5s cubic-bezier(.4,0,.2,1)}
+.cbar.ce{background:linear-gradient(180deg,#e88878,var(--red))}
+.cblbl{font-size:0.58rem;color:var(--tm);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.cbamt{font-size:0.6rem;color:var(--tm);font-weight:600}
+
+/* FILTER */
+.filter-row{display:flex;gap:6px;margin-bottom:13px;flex-wrap:wrap}
+.ftab{
+  padding:4px 12px;border-radius:99px;font-size:0.72rem;font-weight:500;
+  border:1.5px solid var(--crd);background:var(--cr);color:var(--tm);
+  cursor:pointer;transition:all 0.18s;letter-spacing:0.3px;
+  font-family:'DM Sans',sans-serif;
+}
+.ftab:hover{border-color:var(--gl);color:var(--gm)}
+.ftab.on{background:var(--gd);color:var(--cr);border-color:var(--gd)}
+
+/* LIST */
+.lhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.clrbtn{
+  font-size:0.7rem;color:var(--tm);background:none;
+  border:1.5px solid var(--crd);border-radius:8px;padding:4px 10px;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all 0.18s;
+}
+.clrbtn:hover{color:var(--red);border-color:var(--red);background:var(--redb)}
+.txnlist{max-height:390px;overflow-y:auto;padding-right:2px}
+.txnlist::-webkit-scrollbar{width:3px}
+.txnlist::-webkit-scrollbar-track{background:transparent}
+.txnlist::-webkit-scrollbar-thumb{background:var(--gp);border-radius:3px}
+
+.txn{
+  display:flex;align-items:center;gap:11px;
+  padding:11px 12px;border-radius:13px;margin-bottom:7px;
+  background:var(--cr);border:1.5px solid var(--crd);
+  animation:popIn .3s cubic-bezier(.34,1.56,.64,1);
+  transition:box-shadow .2s,transform .2s,border-color .2s;
+}
+.txn:hover{box-shadow:var(--sh);transform:translateX(2px);border-color:#c8d4c2}
+.txn.out{animation:popOut .25s ease forwards}
+@keyframes popIn{from{opacity:0;transform:scale(0.93) translateY(-6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes popOut{to{opacity:0;transform:scale(0.88) translateX(14px);max-height:0;padding:0;margin:0;border:0}}
+.ticon{
+  width:34px;height:34px;border-radius:9px;display:flex;
+  align-items:center;justify-content:center;font-size:0.95rem;flex-shrink:0;
+}
+.ticon.income{background:var(--gp)} .ticon.expense{background:var(--redb)}
+.tinfo{flex:1;min-width:0}
+.tdesc{font-size:0.86rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tmeta{font-size:0.66rem;color:var(--tm);margin-top:1px}
+.tamt{font-family:'Playfair Display',serif;font-size:0.97rem;font-weight:700;white-space:nowrap;flex-shrink:0}
+.tamt.income{color:var(--gm)} .tamt.expense{color:var(--red)}
+.tdel{
+  background:none;border:none;color:var(--crd);font-size:0.82rem;
+  cursor:pointer;padding:5px;border-radius:7px;line-height:1;
+  transition:all .18s;flex-shrink:0;
+}
+.tdel:hover{color:var(--red);background:var(--redb)}
+.empty{text-align:center;padding:36px 16px;color:var(--tm)}
+.empty .ei{font-size:2.2rem;margin-bottom:8px}
+.empty p{font-size:0.8rem;line-height:1.65}
+
+/* MODAL */
+.mbg{
+  position:fixed;inset:0;background:rgba(20,36,24,0.55);
+  display:flex;align-items:center;justify-content:center;
+  z-index:500;opacity:0;pointer-events:none;
+  transition:opacity .25s;backdrop-filter:blur(4px);
+}
+.mbg.open{opacity:1;pointer-events:all}
+.modal{
+  background:var(--w);border-radius:22px;padding:30px 26px;
+  max-width:350px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.22);
+  transform:scale(0.9) translateY(12px);
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.mbg.open .modal{transform:scale(1) translateY(0)}
+.modal h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--gd);margin-bottom:7px}
+.modal p{font-size:0.82rem;color:var(--tm);line-height:1.65;margin-bottom:20px}
+.mbtns{display:flex;gap:9px}
+.mbtn{
+  flex:1;padding:10px;border-radius:11px;font-family:'DM Sans',sans-serif;
+  font-size:0.85rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;
+}
+.mbtn.mcancel{background:var(--cr);color:var(--tm);border:1.5px solid var(--crd)}
+.mbtn.mcancel:hover{border-color:var(--gm);color:var(--gm)}
+.mbtn.mok{background:var(--red);color:var(--w)}
+.mbtn.mok:hover{background:#a93226;box-shadow:0 4px 14px rgba(192,57,43,0.32)}
+
+/* TOAST */
+#toast{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(46px);
+  background:var(--gd);color:var(--cr);
+  padding:10px 20px;border-radius:12px;font-size:0.81rem;font-weight:500;
+  box-shadow:0 6px 24px rgba(0,0,0,0.2);
+  opacity:0;transition:all .3s cubic-bezier(.34,1.56,.64,1);
+  z-index:600;white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+footer{
+  text-align:center;padding:16px;font-size:0.7rem;color:var(--tm);
+  border-top:1px solid var(--crd);
+}
+
+@media(max-width:720px){
+  .cards{grid-template-columns:1fr 1fr}
+  .card.cbal{grid-column:span 2}
+  .grid2{grid-template-columns:1fr}
+  header{padding:14px 18px}
+  main{padding:0 14px 60px;margin-top:18px}
+}
+@media(max-width:420px){
+  .cards{grid-template-columns:1fr}
+  .card.cbal{grid-column:span 1}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Flow<em>w</em></div>
+    <div class="tagline">Budget Tracker</div>
+  </div>
+  <div class="hdate">
+    <span id="ldate"></span>
+    Your money, your story.
+  </div>
+</header>
+
+<main>
+
+  <div class="cards">
+    <div class="card cinc">
+      <div class="clabel">Total Income</div>
+      <div class="camt" id="ci">₹0.00</div>
+      <div class="cbadge" id="bi">0 entries</div>
+    </div>
+    <div class="card cexp">
+      <div class="clabel">Total Expenses</div>
+      <div class="camt" id="ce">₹0.00</div>
+      <div class="cbadge" id="be">0 entries</div>
+    </div>
+    <div class="card cbal">
+      <div class="clabel">Net Balance</div>
+      <div class="camt" id="cb">₹0.00</div>
+      <div class="cbadge" id="bb">Balanced</div>
+    </div>
+  </div>
+
+  <div class="prog-wrap">
+    <div class="prog-head">
+      <span class="prog-label">Spending vs Income</span>
+      <span class="ppct" id="ppct">0% used</span>
+    </div>
+    <div class="track"><div class="fill" id="pfill"></div></div>
+  </div>
+
+  <div class="grid2">
+
+    <div>
+      <div class="panel">
+        <div class="ptitle">New Transaction</div>
+        <div class="toggle">
+          <button class="tbtn ai" id="btn-i" onclick="setType('income')">＋ Income</button>
+          <button class="tbtn"    id="btn-e" onclick="setType('expense')">－ Expense</button>
+        </div>
+        <div class="fg">
+          <label>Description</label>
+          <input type="text" id="desc" placeholder="e.g. Freelance project" maxlength="42" autocomplete="off"/>
+        </div>
+        <div class="fg">
+          <label>Amount (₹)</label>
+          <input type="number" id="amt" placeholder="0.00" min="0.01" step="0.01"/>
+        </div>
+        <div class="fg">
+          <label>Category</label>
+          <div class="sw">
+            <select id="cat">
+              <option value="Design Work">🎨  Design Work</option>
+              <option value="Freelance">💼  Freelance</option>
+              <option value="Salary">💰  Salary</option>
+              <option value="Food">🍜  Food</option>
+              <option value="Transport">🚇  Transport</option>
+              <option value="Shopping">🛍  Shopping</option>
+              <option value="Bills">💡  Bills</option>
+              <option value="Entertainment">🎬  Entertainment</option>
+              <option value="Health">💊  Health</option>
+              <option value="Education">📚  Education</option>
+              <option value="Other">📦  Other</option>
+            </select>
+          </div>
+        </div>
+        <button class="addbtn" id="addbtn" onclick="addTxn()">Add Entry</button>
+      </div>
+
+      <div class="chart-wrap" id="cwrap">
+        <div class="chart-title">Spending by Category</div>
+        <div class="cbars" id="cbars"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="lhead">
+        <div class="ptitle" style="margin-bottom:0">Transactions</div>
+        <button class="clrbtn" onclick="openModal()">Clear All</button>
+      </div>
+      <div class="filter-row">
+        <button class="ftab on" onclick="setFilter('all',this)">All</button>
+        <button class="ftab" onclick="setFilter('income',this)">Income</button>
+        <button class="ftab" onclick="setFilter('expense',this)">Expenses</button>
+      </div>
+      <div class="txnlist" id="txnlist"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer>Floww · Data saved locally in your browser · Built with 🌿</footer>
+
+<div class="mbg" id="modal" onclick="bgClick(event)">
+  <div class="modal">
+    <h3>Clear everything?</h3>
+    <p>All transactions will be permanently deleted. This cannot be undone.</p>
+    <div class="mbtns">
+      <button class="mbtn mcancel" onclick="closeModal()">Cancel</button>
+      <button class="mbtn mok" onclick="doClear()">Yes, clear all</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// STATE
+let curType = 'income';
+let curFilter = 'all';
+let txns = JSON.parse(localStorage.getItem('floww3') || '[]');
+
+const ICONS = {
+  'Design Work':'🎨','Freelance':'💼','Salary':'💰','Food':'🍜',
+  'Transport':'🚇','Shopping':'🛍','Bills':'💡','Entertainment':'🎬',
+  'Health':'💊','Education':'📚','Other':'📦'
+};
+
+// DATE
+function tick(){
+  document.getElementById('ldate').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
+}
+tick(); setInterval(tick,60000);
+
+// TYPE TOGGLE
+function setType(t){
+  curType = t;
+  document.getElementById('btn-i').className='tbtn'+(t==='income'?' ai':'');
+  document.getElementById('btn-e').className='tbtn'+(t==='expense'?' ae':'');
+  const btn = document.getElementById('addbtn');
+  btn.style.background = t==='income'
+    ? 'linear-gradient(135deg,#2d5a3d,#1a3a2a)'
+    : 'linear-gradient(135deg,#c0392b,#922b21)';
+}
+
+// FILTER
+function setFilter(f, el){
+  curFilter = f;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderList();
+}
+
+// ADD
+function addTxn(){
+  const d = document.getElementById('desc').value.trim();
+  const a = parseFloat(document.getElementById('amt').value);
+  const c = document.getElementById('cat').value;
+  if(!d){ shake('desc'); toast('⚠️ Enter a description'); return; }
+  if(!a||a<=0){ shake('amt'); toast('⚠️ Enter a valid amount'); return; }
+
+  // ripple
+  doRipple(document.getElementById('addbtn'));
+
+  txns.unshift({id:Date.now(),type:curType,desc:d,amt:a,cat:c,
+    date:new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})});
+  save(); render();
+  document.getElementById('desc').value='';
+  document.getElementById('amt').value='';
+  document.getElementById('desc').focus();
+  toast(curType==='income'?'💚 Income added!':'🔴 Expense recorded!');
+}
+
+function doRipple(btn){
+  const r = document.createElement('span');
+  r.className='ripple-el';
+  const s = Math.max(btn.offsetWidth,btn.offsetHeight);
+  r.style.cssText=`width:${s}px;height:${s}px;left:50%;top:50%;margin-left:${-s/2}px;margin-top:${-s/2}px`;
+  btn.appendChild(r);
+  r.addEventListener('animationend',()=>r.remove());
+}
+
+// DELETE
+function delTxn(id){
+  const el=document.querySelector(`[data-id="${id}"]`);
+  if(el){ el.classList.add('out'); setTimeout(()=>{ txns=txns.filter(t=>t.id!==id); save(); render(); },240); }
+}
+
+// MODAL
+function openModal(){ if(txns.length) document.getElementById('modal').classList.add('open'); else toast('Nothing to clear'); }
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function bgClick(e){ if(e.target===document.getElementById('modal')) closeModal(); }
+function doClear(){ txns=[]; save(); render(); closeModal(); toast('✨ All cleared'); }
+
+// SAVE
+function save(){ localStorage.setItem('floww3',JSON.stringify(txns)); }
+
+// RENDER
+function render(){
+  const inc=txns.filter(t=>t.type==='income');
+  const exp=txns.filter(t=>t.type==='expense');
+  const si=inc.reduce((s,t)=>s+t.amt,0);
+  const se=exp.reduce((s,t)=>s+t.amt,0);
+  const bal=si-se;
+
+  document.getElementById('ci').textContent='₹'+fmt(si);
+  document.getElementById('ce').textContent='₹'+fmt(se);
+  const cb=document.getElementById('cb');
+  cb.textContent=(bal<0?'−₹':'₹')+fmt(Math.abs(bal));
+  cb.className='camt'+(bal<0?' neg':'');
+  document.getElementById('bi').textContent=inc.length+' entr'+(inc.length===1?'y':'ies');
+  document.getElementById('be').textContent=exp.length+' entr'+(exp.length===1?'y':'ies');
+  document.getElementById('bb').textContent=bal>0?'Surplus 🟢':bal<0?'Deficit 🔴':'Balanced ⚖️';
+
+  const pct=si>0?Math.min((se/si)*100,100):0;
+  const f=document.getElementById('pfill');
+  f.style.width=pct+'%';
+  f.className='fill'+(pct>=80?' danger':pct>=60?' warn':'');
+  const pp=document.getElementById('ppct');
+  pp.textContent=Math.round(pct)+'% used';
+  pp.className='ppct'+(pct>=80?' danger':pct>=60?' warn':'');
+
+  renderList();
+  renderChart();
+}
+
+function renderList(){
+  const el=document.getElementById('txnlist');
+  const vis=curFilter==='all'?txns:txns.filter(t=>t.type===curFilter);
+  if(!vis.length){
+    const msgs={all:'Nothing here yet.<br/>Add your first entry.',income:'No income entries yet.',expense:'No expense entries yet.'};
+    const eicos={all:'🌿',income:'💚',expense:'🔴'};
+    el.innerHTML=`<div class="empty"><div class="ei">${eicos[curFilter]}</div><p>${msgs[curFilter]}</p></div>`;
+    return;
+  }
+  el.innerHTML=vis.map(t=>`
+    <div class="txn" data-id="${t.id}">
+      <div class="ticon ${t.type}">${ICONS[t.cat]||'📦'}</div>
+      <div class="tinfo">
+        <div class="tdesc">${esc(t.desc)}</div>
+        <div class="tmeta">${t.cat} · ${t.date}</div>
+      </div>
+      <div class="tamt ${t.type}">${t.type==='income'?'+':'−'}₹${fmt(t.amt)}</div>
+      <button class="tdel" onclick="delTxn(${t.id})" title="Remove">✕</button>
+    </div>`).join('');
+}
+
+function renderChart(){
+  const cw=document.getElementById('cwrap');
+  const exp=txns.filter(t=>t.type==='expense');
+  if(!exp.length){cw.classList.remove('visible');return;}
+  cw.classList.add('visible');
+  const cats={};
+  exp.forEach(t=>{cats[t.cat]=(cats[t.cat]||0)+t.amt;});
+  const maxA=Math.max(...Object.values(cats));
+  const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,7);
+  document.getElementById('cbars').innerHTML=sorted.map(([cat,amt])=>{
+    const h=Math.max(5,Math.round((amt/maxA)*68));
+    return`<div class="cbar-wrap" title="${cat}: ₹${fmt(amt)}">
+      <div class="cbamt">₹${fmtS(amt)}</div>
+      <div class="cbar ce" style="height:${h}px"></div>
+      <div class="cblbl">${cat.split(' ')[0]}</div>
+    </div>`;
+  }).join('');
+}
+
+// HELPERS
+function fmt(n){return n.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtS(n){return n>=1000?(n/1000).toFixed(1)+'k':Math.round(n);}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function shake(id){
+  const e=document.getElementById(id);
+  e.classList.remove('err');void e.offsetWidth;e.classList.add('err');
+  setTimeout(()=>e.classList.remove('err'),600);
+}
+let tt;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// KEYBOARD
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.activeElement.tagName!=='BUTTON') addTxn();
+  if(e.key==='Escape') closeModal();
+});
+
+// INIT
+render();
+</script>
+</body>
+</html>
